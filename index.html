@@ -49,20 +49,6 @@
     .btn--tg { background: var(--tg); color: #fff; }
     .btn--outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
     .btn--sm { padding: 6px 12px; font-size: 13px; }
-    .chip {
-      display: inline-block;
-      padding: 6px 12px;
-      font-size: 13px;
-      border-radius: 999px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      cursor: pointer;
-      margin: 4px 4px 4px 0;
-      transition: border-color 0.2s, background 0.2s;
-    }
-    .chip:hover, .chip.active { border-color: var(--accent); background: rgba(34, 197, 94, 0.1); }
-    .chip-list { display: flex; flex-wrap: wrap; gap: 0; margin: 8px 0 16px; }
     input, select {
       width: 100%;
       padding: 10px 12px;
@@ -143,6 +129,19 @@
     .send-bar.show { display: flex; }
     .send-bar .btn { min-width: 200px; }
     .send-bar .count { color: var(--muted); font-size: 14px; }
+    .catalog-empty {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .catalog-empty.show { display: block; }
+    .catalog-empty p { margin: 0 0 12px; }
+    .catalog-empty .btn { margin-top: 4px; }
     @media (max-width: 768px) {
       .filters-bar .field { min-width: 100%; max-width: none; }
     }
@@ -163,24 +162,11 @@
           <input type="text" id="deliveryCity" placeholder="Город/регион">
         </div>
       </div>
-      <div class="chip-list" id="chips">
-        <span class="chip" data-cat="Двигатель и навесное">Двигатель</span>
-        <span class="chip" data-cat="Трансмиссия">АКПП/МКПП</span>
-        <span class="chip" data-cat="Ходовая/подвеска">Ходовая</span>
-        <span class="chip" data-cat="Тормоза">Тормоза</span>
-        <span class="chip" data-cat="Электрика/ЭБУ">Электрика</span>
-        <span class="chip" data-cat="Кузов">Кузов</span>
-        <span class="chip" data-cat="Оптика">Оптика</span>
-        <span class="chip" data-cat="Салон">Салон</span>
-        <span class="chip" data-cat="Климат">Климат</span>
-        <span class="chip" data-cat="Топливная">Топливо</span>
-        <span class="chip" data-cat="Автоаксессуары/расходники">Расходники</span>
-      </div>
     </header>
 
     <section class="filters-bar">
       <div class="field">
-        <label for="filterCountry">Страна</label>
+        <label for="filterCountry">Страна производства</label>
         <select id="filterCountry">
           <option value="">Все</option>
           <option value="JP">Япония</option>
@@ -189,13 +175,13 @@
         </select>
       </div>
       <div class="field">
-        <label for="filterCategory">Категория</label>
+        <label for="filterCategory">Категория товара</label>
         <select id="filterCategory">
           <option value="">Все</option>
         </select>
       </div>
       <div class="field">
-        <label for="filterMake">Марка</label>
+        <label for="filterMake">Марка автомобиля</label>
         <select id="filterMake">
           <option value="">Все</option>
           <option value="Toyota" data-origin="JP">Toyota</option>
@@ -214,7 +200,7 @@
         </select>
       </div>
       <div class="field">
-        <label for="filterCondition">Состояние</label>
+        <label for="filterCondition">Состояние детали</label>
         <select id="filterCondition">
           <option value="">Все</option>
           <option value="контракт">Контракт</option>
@@ -228,7 +214,6 @@
           <option value="">Все</option>
           <option value="в наличии">В наличии</option>
           <option value="под заказ">Под заказ</option>
-          <option value="в наличии / под заказ">В наличии / под заказ</option>
           <option value="по запросу">По запросу</option>
         </select>
       </div>
@@ -241,9 +226,14 @@
           <label for="sort">Сортировка: </label>
           <select id="sort">
             <option value="relevance">По названию</option>
-            <option value="price">По цене</option>
+            <option value="contract">Сначала БУ (контракт)</option>
+            <option value="new">Сначала новые</option>
           </select>
         </div>
+      </div>
+      <div class="catalog-empty" id="catalogEmpty">
+        <p>Ничего не найдено. Сбросьте фильтры или измените поисковый запрос.</p>
+        <button type="button" class="btn btn--outline btn--sm" id="resetFilters">Сбросить фильтры</button>
       </div>
       <div class="cards" id="cards"></div>
     </section>
@@ -324,10 +314,10 @@
     const sortEl = document.getElementById("sort");
     const countEl = document.getElementById("count");
     const cardsEl = document.getElementById("cards");
-    const chips = document.getElementById("chips");
     const sendBar = document.getElementById("sendBar");
     const selectedCountEl = document.getElementById("selectedCount");
     const sendTgEl = document.getElementById("sendTg");
+    const catalogEmptyEl = document.getElementById("catalogEmpty");
 
     let selectedIds = new Set();
 
@@ -419,7 +409,6 @@
       return base + (text ? "?text=" + encodeURIComponent(text) : "");
     }
 
-    let activeCategoryChip = null;
     function getFilters() {
       const tokens = searchEl.value.trim() ? searchTokens(searchEl.value) : [];
       return {
@@ -428,8 +417,7 @@
         category: filterCategory.value,
         make: filterMake.value,
         condition: filterCondition.value,
-        availability: filterAvailability.value,
-        chipCategory: activeCategoryChip
+        availability: filterAvailability.value
       };
     }
     function filterAndSort() {
@@ -438,11 +426,14 @@
       if (f.searchTokens.length) list = list.filter(p => matchPart(p, f.searchTokens));
       if (f.country) list = list.filter(p => ORIGIN_BY_MAKE[p.make] === f.country);
       if (f.category) list = list.filter(p => p.category === f.category);
-      if (f.chipCategory) list = list.filter(p => p.category === f.chipCategory);
       if (f.make) list = list.filter(p => p.make === f.make);
       if (f.condition) list = list.filter(p => p.condition === f.condition);
       if (f.availability) list = list.filter(p => p.availability === f.availability || (p.availability && p.availability.indexOf(f.availability) !== -1));
-      if (sortEl.value === "price") list.sort((a, b) => (a.price ?? 1e9) - (b.price ?? 1e9));
+      if (sortEl.value === "contract") {
+        list.sort((a, b) => (a.condition === "контракт" ? 0 : 1) - (b.condition === "контракт" ? 0 : 1));
+      } else if (sortEl.value === "new") {
+        list.sort((a, b) => (a.condition === "новая" ? 0 : 1) - (b.condition === "новая" ? 0 : 1));
+      }
       return list;
     }
     function updateSendBar() {
@@ -456,10 +447,27 @@
         sendBar.classList.remove("show");
       }
     }
+    function hasActiveFilters(f) {
+      return !!(f.country || f.category || f.make || f.condition || f.availability || f.searchTokens.length);
+    }
+    function resetFilters() {
+      filterCountry.value = "";
+      filterMake.value = "";
+      filterCategory.value = "";
+      filterCondition.value = "";
+      filterAvailability.value = "";
+      filterMake.querySelectorAll("option").forEach(o => { o.hidden = false; });
+      renderCards();
+    }
     function renderCards() {
       const list = filterAndSort();
       const f = getFilters();
       countEl.textContent = "Найдено: " + list.length;
+      if (list.length === 0 && hasActiveFilters(f)) {
+        catalogEmptyEl.classList.add("show");
+      } else {
+        catalogEmptyEl.classList.remove("show");
+      }
       cardsEl.innerHTML = "";
       list.forEach(part => {
         const priceStr = part.price != null ? part.price.toLocaleString("ru-RU") + " ₽" : "Запросить цену";
@@ -504,34 +512,16 @@
       else if (filterMake.value && filterMake.querySelector("option[value='" + filterMake.value + "']")?.hidden) filterMake.value = "";
       renderCards();
     });
-    chips.querySelectorAll(".chip").forEach(chip => {
-      chip.addEventListener("click", function() {
-        const cat = this.getAttribute("data-cat");
-        if (activeCategoryChip === cat) {
-          activeCategoryChip = null;
-          this.classList.remove("active");
-        } else {
-          chips.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
-          activeCategoryChip = cat;
-          this.classList.add("active");
-        }
-        filterCategory.value = activeCategoryChip || "";
-        renderCards();
-      });
-    });
     searchEl.addEventListener("input", renderCards);
     deliveryCityEl.addEventListener("input", updateSendBar);
     deliveryCityEl.addEventListener("change", updateSendBar);
-    filterCategory.addEventListener("change", function() {
-      activeCategoryChip = this.value || null;
-      chips.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
-      chips.querySelectorAll(".chip").forEach(c => { if (c.getAttribute("data-cat") === activeCategoryChip) c.classList.add("active"); });
-      renderCards();
-    });
+    filterCategory.addEventListener("change", renderCards);
     filterMake.addEventListener("change", renderCards);
     filterCondition.addEventListener("change", renderCards);
     filterAvailability.addEventListener("change", renderCards);
     sortEl.addEventListener("change", renderCards);
+
+    document.getElementById("resetFilters").addEventListener("click", resetFilters);
 
     sendTgEl.addEventListener("click", function() {
       if (selectedIds.size === 0) {
