@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Каталог автозапчастей — японские, корейские, китайские авто</title>
+  <meta name="description" content="Каталог запчастей для японских, корейских и китайских автомобилей. Выберите детали и отправьте запрос в Telegram.">
+  <style>
+    :root {
+      --bg: #0d0d0f;
+      --surface: #16161a;
+      --border: #2a2a30;
+      --text: #e4e4e7;
+      --muted: #71717a;
+      --accent: #22c55e;
+      --tg: #0088cc;
+      --radius: 8px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--text);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 100px;
+    }
+    .container { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+    h1, h2 { margin: 0 0 0.5em; font-weight: 600; }
+    h1 { font-size: clamp(1.25rem, 3vw, 1.5rem); }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 16px;
+      font: inherit;
+      font-weight: 500;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn--tg { background: var(--tg); color: #fff; }
+    .btn--outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn--sm { padding: 6px 12px; font-size: 13px; }
+    .chip {
+      display: inline-block;
+      padding: 6px 12px;
+      font-size: 13px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      margin: 4px 4px 4px 0;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .chip:hover, .chip.active { border-color: var(--accent); background: rgba(34, 197, 94, 0.1); }
+    .chip-list { display: flex; flex-wrap: wrap; gap: 0; margin: 8px 0 16px; }
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      font: inherit;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    input::placeholder { color: var(--muted); }
+    input:focus, select:focus { outline: none; border-color: var(--accent); }
+    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+    .top-bar {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .top-bar__row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 12px;
+    }
+    .top-bar .field { flex: 1 1 160px; min-width: 140px; }
+    .top-bar .field--wide { flex: 2 1 220px; }
+    .filters-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .filters-bar .field { min-width: 120px; max-width: 160px; }
+    .filters-bar .field label { margin-bottom: 2px; }
+    .sort-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .sort-row .count { color: var(--muted); font-size: 14px; }
+    .catalog { padding: 16px 0 24px; }
+    .cards { display: grid; gap: 16px; }
+    .card {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--accent); }
+    .card__check { flex-shrink: 0; margin-top: 2px; }
+    .card__check input { width: auto; margin: 0; }
+    .card__body { flex: 1; min-width: 0; }
+    .card__title { font-size: 1.05rem; margin-bottom: 6px; }
+    .card__title mark { background: rgba(34, 197, 94, 0.35); color: inherit; padding: 0 2px; border-radius: 2px; }
+    .card__meta { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    .card__meta span { margin-right: 10px; }
+    .card__note { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+    .card__price { font-weight: 600; margin-bottom: 8px; }
+    .card__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .send-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 12px 16px;
+      display: none;
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .send-bar.show { display: flex; }
+    .send-bar .btn { min-width: 200px; }
+    .send-bar .count { color: var(--muted); font-size: 14px; }
+    @media (max-width: 768px) {
+      .filters-bar .field { min-width: 100%; max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="top-bar" id="top">
+      <h1>Каталог автозапчастей</h1>
+      <p style="color: var(--muted); font-size: 14px; margin: 0 0 12px;">Японские, корейские и китайские автомобили. Выберите детали и отправьте запрос в Telegram.</p>
+      <div class="top-bar__row">
+        <div class="field field--wide">
+          <label for="search">Поиск</label>
+          <input type="text" id="search" placeholder="Название, артикул, марка...">
+        </div>
+        <div class="field">
+          <label for="deliveryCity">Доставка в</label>
+          <input type="text" id="deliveryCity" placeholder="Город/регион">
+        </div>
+      </div>
+      <div class="chip-list" id="chips">
+        <span class="chip" data-cat="Двигатель и навесное">Двигатель</span>
+        <span class="chip" data-cat="Трансмиссия">АКПП/МКПП</span>
+        <span class="chip" data-cat="Ходовая/подвеска">Ходовая</span>
+        <span class="chip" data-cat="Тормоза">Тормоза</span>
+        <span class="chip" data-cat="Электрика/ЭБУ">Электрика</span>
+        <span class="chip" data-cat="Кузов">Кузов</span>
+        <span class="chip" data-cat="Оптика">Оптика</span>
+        <span class="chip" data-cat="Салон">Салон</span>
+        <span class="chip" data-cat="Климат">Климат</span>
+        <span class="chip" data-cat="Топливная">Топливо</span>
+        <span class="chip" data-cat="Автоаксессуары/расходники">Расходники</span>
+      </div>
+    </header>
+
+    <section class="filters-bar">
+      <div class="field">
+        <label for="filterCountry">Страна</label>
+        <select id="filterCountry">
+          <option value="">Все</option>
+          <option value="JP">Япония</option>
+          <option value="KR">Корея</option>
+          <option value="CN">Китай</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="filterCategory">Категория</label>
+        <select id="filterCategory">
+          <option value="">Все</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="filterMake">Марка</label>
+        <select id="filterMake">
+          <option value="">Все</option>
+          <option value="Toyota" data-origin="JP">Toyota</option>
+          <option value="Nissan" data-origin="JP">Nissan</option>
+          <option value="Honda" data-origin="JP">Honda</option>
+          <option value="Mazda" data-origin="JP">Mazda</option>
+          <option value="Subaru" data-origin="JP">Subaru</option>
+          <option value="Mitsubishi" data-origin="JP">Mitsubishi</option>
+          <option value="Lexus" data-origin="JP">Lexus</option>
+          <option value="Hyundai" data-origin="KR">Hyundai</option>
+          <option value="Kia" data-origin="KR">Kia</option>
+          <option value="Geely" data-origin="CN">Geely</option>
+          <option value="Haval" data-origin="CN">Haval</option>
+          <option value="Chery" data-origin="CN">Chery</option>
+          <option value="Exeed" data-origin="CN">Exeed</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="filterCondition">Состояние</label>
+        <select id="filterCondition">
+          <option value="">Все</option>
+          <option value="контракт">Контракт</option>
+          <option value="новая">Новая</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="filterAvailability">Наличие</label>
+        <select id="filterAvailability">
+          <option value="">Все</option>
+          <option value="в наличии">В наличии</option>
+          <option value="под заказ">Под заказ</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="catalog" id="catalog">
+      <div class="sort-row">
+        <span class="count" id="count">Найдено: 0</span>
+        <div>
+          <label for="sort">Сортировка: </label>
+          <select id="sort">
+            <option value="relevance">По релевантности</option>
+            <option value="price">По цене</option>
+          </select>
+        </div>
+      </div>
+      <div class="cards" id="cards"></div>
+    </section>
+  </div>
+
+  <div class="send-bar" id="sendBar">
+    <span class="count" id="selectedCount">Выбрано: 0</span>
+    <a href="#" id="sendTg" class="btn btn--tg" target="_blank" rel="noopener">Отправить запрос в Telegram</a>
+  </div>
+
+  <script>
+  (function() {
+    const TELEGRAM_LINK = "https://t.me/ponizovandrey";
+
+    const ORIGIN_BY_MAKE = {
+      Toyota: "JP", Nissan: "JP", Honda: "JP", Mazda: "JP", Subaru: "JP", Mitsubishi: "JP", Lexus: "JP",
+      Hyundai: "KR", Kia: "KR",
+      Geely: "CN", Haval: "CN", Chery: "CN", Exeed: "CN", Universal: ""
+    };
+
+    const partsData = [
+      { id: "001", name: "ДВС в сборе 1NZ-FE", category: "Двигатель и навесное", make: "Toyota", model: "Yaris, Corolla", engineCode: "1NZ-FE", bodyCode: "", condition: "контракт", availability: "в наличии", price: 45000, city: "Владивосток", note: "Пробег по док. 120 тыс. км", oem: "1NZ-FE", keywords: "двигатель мотор 1nzfe" },
+      { id: "002", name: "Стартер 1.5", category: "Двигатель и навесное", make: "Toyota", model: "Corolla E120", engineCode: "1NZ", bodyCode: "", condition: "контракт", availability: "в наличии", price: 3500, city: "Владивосток", note: "Проверен на стенде", oem: "428000-3140", keywords: "стартер запуск" },
+      { id: "003", name: "Генератор 90А", category: "Двигатель и навесное", make: "Nissan", model: "Qashqai J10", engineCode: "MR20", bodyCode: "", condition: "контракт", availability: "в наличии", price: 5500, city: "Владивосток", note: "Без шкива", oem: "23100-ED60A", keywords: "генератор зарядка" },
+      { id: "004", name: "Компрессор кондиционера", category: "Двигатель и навесное", make: "Toyota", model: "Camry XV50", engineCode: "2AR-FE", bodyCode: "", condition: "контракт", availability: "под заказ", price: null, city: "Владивосток", note: "Под заказ 3–5 дней", oem: "88310-06100", keywords: "кондей компрессор климат" },
+      { id: "005", name: "АКПП автомат 4-ступ", category: "Трансмиссия", make: "Toyota", model: "Corolla E120", engineCode: "1ZZ", bodyCode: "", condition: "контракт", availability: "в наличии", price: 28000, city: "Владивосток", note: "U240E, пробег 150 тыс.", oem: "U240E", keywords: "акпп автомат коробка передач" },
+      { id: "006", name: "Рейка рулевая с ГУР", category: "Рулевое", make: "Nissan", model: "X-Trail T31", engineCode: "MR20", bodyCode: "", condition: "контракт", availability: "в наличии", price: 12000, city: "Владивосток", note: "В сборе с тягами", oem: "48100-ET00A", keywords: "рейка руль гур" },
+      { id: "007", name: "Стойка стабилизатора передняя", category: "Ходовая/подвеска", make: "Honda", model: "CR-V III", engineCode: "K24", bodyCode: "", condition: "новая", availability: "в наличии", price: 800, city: "Владивосток", note: "Оригинал", oem: "52300-SNA-A01", keywords: "стойка стабилизатор подвеска" },
+      { id: "008", name: "Суппорт передний левый", category: "Тормоза", make: "Mazda", model: "Mazda 6 GG", engineCode: "LF", bodyCode: "", condition: "контракт", availability: "в наличии", price: 4500, city: "Владивосток", note: "С направляющими", oem: "N0Y1-33-251", keywords: "суппорт тормоз калипер" },
+      { id: "009", name: "ЭБУ двигателя", category: "Электрика/ЭБУ", make: "Toyota", model: "Camry XV30", engineCode: "1AZ-FE", bodyCode: "", condition: "контракт", availability: "под заказ", price: 7500, city: "Владивосток", note: "Под заказ", oem: "89661-0D210", keywords: "эбу мозги блок управления" },
+      { id: "010", name: "Фара передняя левая", category: "Оптика", make: "Toyota", model: "Corolla E150", engineCode: "", bodyCode: "ZRE15", condition: "контракт", availability: "в наличии", price: 6500, city: "Владивосток", note: "Без ламп", oem: "81110-0D210", keywords: "фара свет оптика" },
+      { id: "011", name: "Дверь передняя левая в сборе", category: "Кузов", make: "Nissan", model: "X-Trail T31", engineCode: "", bodyCode: "J31", condition: "контракт", availability: "в наличии", price: 15000, city: "Владивосток", note: "Цвет 325", oem: "80510-EA20A", keywords: "дверь кузов" },
+      { id: "012", name: "Насос ГУР", category: "Рулевое", make: "Toyota", model: "Land Cruiser Prado 120", engineCode: "1GR", bodyCode: "", condition: "контракт", availability: "в наличии", price: 5500, city: "Владивосток", note: "В сборе с бачком", oem: "44320-60120", keywords: "гур насос руль" },
+      { id: "013", name: "ТНВД", category: "Топливная", make: "Toyota", model: "Land Cruiser 100", engineCode: "1HD-FTE", bodyCode: "", condition: "контракт", availability: "под заказ", price: null, city: "Владивосток", note: "Дизель", oem: "22300-17020", keywords: "тнвд дизель топливо насос" },
+      { id: "014", name: "Радиатор печки", category: "Климат", make: "Honda", model: "Accord VII", engineCode: "K20", bodyCode: "CL7", condition: "контракт", availability: "в наличии", price: 3500, city: "Владивосток", note: "Промытый", oem: "79100-SMT-E01", keywords: "радиатор печка отопитель" },
+      { id: "015", name: "Сиденье переднее водительское", category: "Салон", make: "Mazda", model: "Mazda 6 GG", engineCode: "", bodyCode: "GG", condition: "контракт", availability: "в наличии", price: 8500, city: "Владивосток", note: "Кожа, электро", oem: "", keywords: "сиденье кресло салон" },
+      { id: "016", name: "Датчик кислорода лямбда", category: "Электрика/ЭБУ", make: "Toyota", model: "Camry XV30", engineCode: "1AZ", bodyCode: "", condition: "новая", availability: "в наличии", price: 2200, city: "Владивосток", note: "Передний", oem: "89465-0D090", keywords: "лямбда датчик кислорода" },
+      { id: "017", name: "Привод ШРУС наружный", category: "Трансмиссия", make: "Toyota", model: "Rav4 III", engineCode: "2AZ", bodyCode: "", condition: "контракт", availability: "в наличии", price: 2800, city: "Владивосток", note: "Правый", oem: "43430-42020", keywords: "шрус привод граната" },
+      { id: "018", name: "Щётка стеклоочистителя", category: "Автоаксессуары/расходники", make: "Universal", model: "—", engineCode: "", bodyCode: "", condition: "новая", availability: "в наличии", price: 400, city: "Владивосток", note: "Каркасная 600 мм", oem: "", keywords: "дворник щетка стекло" },
+      { id: "019", name: "Генератор", category: "Двигатель и навесное", make: "Hyundai", model: "Solaris", engineCode: "G4FA", bodyCode: "", condition: "контракт", availability: "в наличии", price: 4200, city: "Владивосток", note: "Проверен", oem: "37300-2D500", keywords: "генератор зарядка" },
+      { id: "020", name: "Фара передняя", category: "Оптика", make: "Kia", model: "Sportage III", engineCode: "", bodyCode: "QL", condition: "контракт", availability: "в наличии", price: 7200, city: "Владивосток", note: "Левый", oem: "95110-2Q100", keywords: "фара оптика" },
+      { id: "021", name: "Блок управления климатом", category: "Климат", make: "Geely", model: "Coolray", engineCode: "", bodyCode: "", condition: "контракт", availability: "под заказ", price: null, city: "Владивосток", note: "Под заказ", oem: "", keywords: "климат кондиционер эбу" },
+      { id: "022", name: "Зеркало боковое левое", category: "Кузов", make: "Haval", model: "F7", engineCode: "", bodyCode: "", condition: "новая", availability: "в наличии", price: 3500, city: "Владивосток", note: "С подогревом", oem: "", keywords: "зеркало кузов" },
+      { id: "023", name: "Датчик АБС", category: "Тормоза", make: "Chery", model: "Tiggo 7", engineCode: "", bodyCode: "", condition: "контракт", availability: "в наличии", price: 1800, city: "Владивосток", note: "Передний левый", oem: "", keywords: "абс датчик тормоз" },
+    ];
+
+    const CATEGORIES = [...new Set(partsData.map(p => p.category))].sort();
+    const searchEl = document.getElementById("search");
+    const deliveryCityEl = document.getElementById("deliveryCity");
+    const filterCountry = document.getElementById("filterCountry");
+    const filterCategory = document.getElementById("filterCategory");
+    const filterMake = document.getElementById("filterMake");
+    const filterCondition = document.getElementById("filterCondition");
+    const filterAvailability = document.getElementById("filterAvailability");
+    const sortEl = document.getElementById("sort");
+    const countEl = document.getElementById("count");
+    const cardsEl = document.getElementById("cards");
+    const chips = document.getElementById("chips");
+    const sendBar = document.getElementById("sendBar");
+    const selectedCountEl = document.getElementById("selectedCount");
+    const sendTgEl = document.getElementById("sendTg");
+
+    let selectedIds = new Set();
+
+    CATEGORIES.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      filterCategory.appendChild(opt);
+    });
+
+    function normalize(s) {
+      if (!s) return "";
+      return String(s).toLowerCase().replace(/\s+/g, " ").replace(/[-–—]/g, " ").trim();
+    }
+    function latinToRu(s) {
+      const map = { "a":"а","b":"б","v":"в","g":"г","d":"д","e":"е","yo":"ё","zh":"ж","z":"з","i":"и","y":"й","k":"к","l":"л","m":"м","n":"н","o":"о","p":"п","r":"р","s":"с","t":"т","u":"у","f":"ф","h":"х","ts":"ц","ch":"ч","sh":"ш","sch":"щ","yu":"ю","ya":"я" };
+      let r = s;
+      for (const [lat, ru] of Object.entries(map)) r = r.replace(new RegExp(lat, "gi"), ru);
+      return r;
+    }
+    function searchTokens(str) {
+      const n = normalize(str);
+      const nRu = latinToRu(n);
+      return (n + " " + nRu).split(/\s+/).filter(Boolean);
+    }
+    function partSearchText(p) {
+      return [p.name, p.category, p.make, p.model, p.engineCode, p.bodyCode, p.oem, p.keywords, p.id].filter(Boolean).join(" ");
+    }
+    function matchPart(part, tokens) {
+      const text = normalize(partSearchText(part));
+      for (const t of tokens) {
+        const tNorm = normalize(t);
+        if (tNorm.length < 2) continue;
+        if (text.indexOf(tNorm) === -1 && text.indexOf(latinToRu(tNorm)) === -1) return false;
+      }
+      return true;
+    }
+    function escapeHtml(s) {
+      const div = document.createElement("div");
+      div.textContent = s;
+      return div.innerHTML;
+    }
+    function escapeRe(s) {
+      return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+    function highlight(str, tokens) {
+      if (!str || !tokens.length) return escapeHtml(str);
+      const norm = normalize(str);
+      const len = str.length;
+      const markRanges = [];
+      tokens.forEach(t => {
+        const tNorm = normalize(t);
+        if (tNorm.length < 2) return;
+        const alt = latinToRu(tNorm);
+        const re = new RegExp("(" + escapeRe(tNorm) + "|" + escapeRe(alt) + ")", "gi");
+        let m;
+        while ((m = re.exec(norm)) !== null) {
+          markRanges.push([m.index, m.index + m[0].length]);
+        }
+      });
+      markRanges.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+      let out = "";
+      let pos = 0;
+      let lastEnd = 0;
+      for (let i = 0; i < markRanges.length; i++) {
+        const [s0, s1] = markRanges[i];
+        if (s0 < lastEnd) continue;
+        lastEnd = s1;
+        out += escapeHtml(str.substring(pos, s0)) + "<mark>" + escapeHtml(str.substring(s0, s1)) + "</mark>";
+        pos = s1;
+      }
+      out += escapeHtml(str.substring(pos, len));
+      return out;
+    }
+
+    function buildMessageForParts(parts, deliveryCity) {
+      const city = (deliveryCity && deliveryCity.trim()) ? deliveryCity.trim() : "не указан";
+      if (parts.length === 0) {
+        return "Здравствуйте! Интересуют автозапчасти. Доставка в: " + city + ". Подскажите наличие и цену.";
+      }
+      const lines = parts.map((p, i) => {
+        const params = [p.engineCode, p.bodyCode].filter(Boolean).join(", ") || "—";
+        return (i + 1) + ". " + p.name + ", артикул " + p.id + ", " + p.make + " " + p.model + (params !== "—" ? ", " + params : "") + ".";
+      });
+      return "Здравствуйте! Интересуют запчасти:\n\n" + lines.join("\n") + "\n\nДоставка в: " + city + ". Есть в наличии?";
+    }
+    function tgUrl(text) {
+      const base = TELEGRAM_LINK.replace(/\/$/, "");
+      return base + (text ? "?text=" + encodeURIComponent(text) : "");
+    }
+
+    let activeCategoryChip = null;
+    function getFilters() {
+      const tokens = searchEl.value.trim() ? searchTokens(searchEl.value) : [];
+      return {
+        searchTokens: tokens,
+        country: filterCountry.value,
+        category: filterCategory.value,
+        make: filterMake.value,
+        condition: filterCondition.value,
+        availability: filterAvailability.value,
+        chipCategory: activeCategoryChip
+      };
+    }
+    function filterAndSort() {
+      const f = getFilters();
+      let list = partsData.slice();
+      if (f.searchTokens.length) list = list.filter(p => matchPart(p, f.searchTokens));
+      if (f.country) list = list.filter(p => ORIGIN_BY_MAKE[p.make] === f.country);
+      if (f.category) list = list.filter(p => p.category === f.category);
+      if (f.chipCategory) list = list.filter(p => p.category === f.chipCategory);
+      if (f.make) list = list.filter(p => p.make === f.make);
+      if (f.condition) list = list.filter(p => p.condition === f.condition);
+      if (f.availability) list = list.filter(p => p.availability === f.availability);
+      if (sortEl.value === "price") list.sort((a, b) => (a.price ?? 1e9) - (b.price ?? 1e9));
+      return list;
+    }
+    function updateSendBar() {
+      const n = selectedIds.size;
+      selectedCountEl.textContent = "Выбрано: " + n;
+      if (n > 0) {
+        sendBar.classList.add("show");
+        const parts = partsData.filter(p => selectedIds.has(p.id));
+        sendTgEl.href = tgUrl(buildMessageForParts(parts, deliveryCityEl.value));
+      } else {
+        sendBar.classList.remove("show");
+      }
+    }
+    function renderCards() {
+      const list = filterAndSort();
+      const f = getFilters();
+      countEl.textContent = "Найдено: " + list.length;
+      cardsEl.innerHTML = "";
+      list.forEach(part => {
+        const priceStr = part.price != null ? part.price.toLocaleString("ru-RU") + " ₽" : "Запросить цену";
+        const titleHtml = f.searchTokens.length ? highlight(part.name, f.searchTokens) : escapeHtml(part.name);
+        const checked = selectedIds.has(part.id) ? " checked" : "";
+        const card = document.createElement("article");
+        card.className = "card";
+        card.innerHTML =
+          "<div class=\"card__check\"><label><input type=\"checkbox\" data-part-id=\"" + escapeHtml(part.id) + "\"" + checked + "> В запрос</label></div>" +
+          "<div class=\"card__body\">" +
+          "<div class=\"card__title\">" + titleHtml + "</div>" +
+          "<div class=\"card__meta\">" +
+          "<span>" + escapeHtml(part.category) + "</span>" +
+          "<span>" + escapeHtml(part.make + " " + part.model) + "</span>" +
+          "<span>" + escapeHtml(part.condition) + "</span>" +
+          "<span>" + escapeHtml(part.availability) + "</span>" +
+          "</div>" +
+          (part.note ? "<div class=\"card__note\">" + escapeHtml(part.note) + "</div>" : "") +
+          "<div class=\"card__price\">" + priceStr + "</div>" +
+          "<div class=\"card__actions\">" +
+          "<a href=\"" + tgUrl(buildMessageForParts([part], deliveryCityEl.value)) + "\" target=\"_blank\" rel=\"noopener\" class=\"btn btn--tg btn--sm\">Спросить в Telegram</a>" +
+          "</div></div>";
+        cardsEl.appendChild(card);
+      });
+      cardsEl.querySelectorAll("input[data-part-id]").forEach(cb => {
+        cb.addEventListener("change", function() {
+          const id = this.getAttribute("data-part-id");
+          if (this.checked) selectedIds.add(id); else selectedIds.delete(id);
+          updateSendBar();
+        });
+      });
+    }
+
+    filterCountry.addEventListener("change", function() {
+      const country = this.value;
+      filterMake.querySelectorAll("option").forEach(o => {
+        const origin = o.getAttribute("data-origin");
+        if (origin == null) { o.hidden = false; return; }
+        o.hidden = country ? origin !== country : false;
+      });
+      if (!country) filterMake.value = "";
+      else if (filterMake.value && filterMake.querySelector("option[value='" + filterMake.value + "']")?.hidden) filterMake.value = "";
+      renderCards();
+    });
+    chips.querySelectorAll(".chip").forEach(chip => {
+      chip.addEventListener("click", function() {
+        const cat = this.getAttribute("data-cat");
+        if (activeCategoryChip === cat) {
+          activeCategoryChip = null;
+          this.classList.remove("active");
+        } else {
+          chips.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+          activeCategoryChip = cat;
+          this.classList.add("active");
+        }
+        filterCategory.value = activeCategoryChip || "";
+        renderCards();
+      });
+    });
+    searchEl.addEventListener("input", renderCards);
+    deliveryCityEl.addEventListener("input", updateSendBar);
+    deliveryCityEl.addEventListener("change", updateSendBar);
+    filterCategory.addEventListener("change", function() {
+      activeCategoryChip = this.value || null;
+      chips.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+      chips.querySelectorAll(".chip").forEach(c => { if (c.getAttribute("data-cat") === activeCategoryChip) c.classList.add("active"); });
+      renderCards();
+    });
+    filterMake.addEventListener("change", renderCards);
+    filterCondition.addEventListener("change", renderCards);
+    filterAvailability.addEventListener("change", renderCards);
+    sortEl.addEventListener("change", renderCards);
+
+    sendTgEl.addEventListener("click", function() {
+      if (selectedIds.size === 0) {
+        this.href = tgUrl(buildMessageForParts([], deliveryCityEl.value));
+      }
+    });
+
+    renderCards();
+    updateSendBar();
+  })();
+  </script>
+</body>
+</html>

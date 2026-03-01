@@ -1,0 +1,218 @@
+/* Zapchasty — статический сайт */
+:root {
+  --color-bg: #0f0f12;
+  --color-surface: #1a1a20;
+  --color-border: #2a2a32;
+  --color-text: #e8e6e3;
+  --color-muted: #8b8685;
+  --color-accent: #c9a227;
+  --color-accent-hover: #dbb42e;
+  --font: "Manrope", system-ui, sans-serif;
+  --radius: 8px;
+  --transition: 0.2s ease;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+/* Header */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(15, 15, 18, 0.9);
+  border-bottom: 1px solid var(--color-border);
+  backdrop-filter: blur(8px);
+}
+
+.header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 3.5rem;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--color-accent);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.logo:hover {
+  color: var(--color-accent-hover);
+}
+
+.nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav__link {
+  color: var(--color-muted);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--transition);
+}
+
+.nav__link:hover,
+.nav__link--active {
+  color: var(--color-text);
+}
+
+.nav__link--active {
+  color: var(--color-accent);
+}
+
+/* Hero */
+.hero {
+  padding: 4rem 0 5rem;
+  text-align: center;
+}
+
+.hero__title {
+  margin: 0 0 0.75rem;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--color-text);
+}
+
+.hero__text {
+  margin: 0 0 1.5rem;
+  font-size: 1.125rem;
+  color: var(--color-muted);
+  max-width: 32ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  font-family: var(--font);
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition);
+}
+
+.btn--primary {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.btn--primary:hover {
+  background: var(--color-accent-hover);
+  transform: translateY(-1px);
+}
+
+/* Sections */
+.section {
+  padding: 3rem 0;
+}
+
+.section--alt {
+  background: var(--color-surface);
+}
+
+.section__title {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.section__text {
+  margin: 0;
+  color: var(--color-muted);
+  max-width: 60ch;
+}
+
+/* Cards */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.card {
+  padding: 1.5rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  transition: border-color var(--transition);
+}
+
+.card:hover {
+  border-color: var(--color-accent);
+}
+
+.card__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.card__text {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--color-muted);
+}
+
+/* Footer */
+.footer {
+  padding: 2rem 0;
+  border-top: 1px solid var(--color-border);
+  margin-top: 2rem;
+}
+
+.footer__copy {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-muted);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .nav {
+    gap: 1rem;
+  }
+
+  .hero {
+    padding: 3rem 0 4rem;
+  }
+
+  .section {
+    padding: 2rem 0;
+  }
+}
