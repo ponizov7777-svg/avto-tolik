@@ -219,6 +219,7 @@
           <option value="">Все</option>
           <option value="контракт">Контракт</option>
           <option value="новая">Новая</option>
+          <option value="по запросу">По запросу</option>
         </select>
       </div>
       <div class="field">
@@ -227,6 +228,7 @@
           <option value="">Все</option>
           <option value="в наличии">В наличии</option>
           <option value="под заказ">Под заказ</option>
+          <option value="по запросу">По запросу</option>
         </select>
       </div>
     </section>
@@ -237,7 +239,7 @@
         <div>
           <label for="sort">Сортировка: </label>
           <select id="sort">
-            <option value="relevance">По релевантности</option>
+            <option value="relevance">По названию</option>
             <option value="price">По цене</option>
           </select>
         </div>
@@ -251,6 +253,7 @@
     <a href="#" id="sendTg" class="btn btn--tg" target="_blank" rel="noopener">Отправить запрос в Telegram</a>
   </div>
 
+  <script src="catalog-data.js"></script>
   <script>
   (function() {
     const TELEGRAM_LINK = "https://t.me/ponizovandrey";
@@ -261,7 +264,7 @@
       Geely: "CN", Haval: "CN", Chery: "CN", Exeed: "CN", Universal: ""
     };
 
-    const partsData = [
+    const DEMO_PARTS = [
       { id: "001", name: "ДВС в сборе 1NZ-FE", category: "Двигатель и навесное", make: "Toyota", model: "Yaris, Corolla", engineCode: "1NZ-FE", bodyCode: "", condition: "контракт", availability: "в наличии", price: 45000, city: "Владивосток", note: "Пробег по док. 120 тыс. км", oem: "1NZ-FE", keywords: "двигатель мотор 1nzfe" },
       { id: "002", name: "Стартер 1.5", category: "Двигатель и навесное", make: "Toyota", model: "Corolla E120", engineCode: "1NZ", bodyCode: "", condition: "контракт", availability: "в наличии", price: 3500, city: "Владивосток", note: "Проверен на стенде", oem: "428000-3140", keywords: "стартер запуск" },
       { id: "003", name: "Генератор 90А", category: "Двигатель и навесное", make: "Nissan", model: "Qashqai J10", engineCode: "MR20", bodyCode: "", condition: "контракт", availability: "в наличии", price: 5500, city: "Владивосток", note: "Без шкива", oem: "23100-ED60A", keywords: "генератор зарядка" },
@@ -286,6 +289,28 @@
       { id: "022", name: "Зеркало боковое левое", category: "Кузов", make: "Haval", model: "F7", engineCode: "", bodyCode: "", condition: "новая", availability: "в наличии", price: 3500, city: "Владивосток", note: "С подогревом", oem: "", keywords: "зеркало кузов" },
       { id: "023", name: "Датчик АБС", category: "Тормоза", make: "Chery", model: "Tiggo 7", engineCode: "", bodyCode: "", condition: "контракт", availability: "в наличии", price: 1800, city: "Владивосток", note: "Передний левый", oem: "", keywords: "абс датчик тормоз" },
     ];
+
+    const partsData = (typeof CATALOG_DATA !== "undefined" && CATALOG_DATA.length > 0)
+      ? CATALOG_DATA.map(function(p, i) {
+          return {
+            id: p.id,
+            name: p.name,
+            category: p.category,
+            subcategory: p.subcategory || "",
+            make: p.make || "",
+            model: p.model || "",
+            engineCode: "",
+            bodyCode: "",
+            condition: "по запросу",
+            availability: "по запросу",
+            price: null,
+            city: "Владивосток",
+            note: "",
+            oem: "",
+            keywords: (p.name + " " + (p.category || "") + " " + (p.subcategory || "") + " " + (p.make || "") + " " + (p.model || "") + " " + (p.keywords || "")).trim()
+          };
+        })
+      : DEMO_PARTS;
 
     const CATEGORIES = [...new Set(partsData.map(p => p.category))].sort();
     const searchEl = document.getElementById("search");
